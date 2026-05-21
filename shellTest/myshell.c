@@ -17,6 +17,9 @@ const char* gsep = " ";
 // shell自己的工作路径
 char cwd[MAXSIZECL];
 
+// 最近一个命令执行完毕的退出码
+int lastcode = 0;
+
 
 
 
@@ -84,6 +87,7 @@ int ExecuteCommand() {
 		pid_t rid = waitpid(id, &wstatus, 0);
 		if (rid > 0) {
 			// 等待成功
+			lastcode = WEXITSTATUS(wstatus);
 			// printf("wait success!\n");
 		}
 	}
@@ -103,6 +107,18 @@ int CheckBuildinCommand() {
 			getcwd(buf, sizeof(buf));
 			snprintf(cwd, sizeof(cwd), "PWD=%s", buf);
 			putenv(cwd);
+			lastcode = 0;
+		}
+		return 1;
+	}
+	else if (strcmp(gargv[0], "echo") == 0) {
+		if (gargc == 2) {
+			if (gargv[1][0] == '$') {
+				if (strcmp(gargv[1]+1, "?") == 0) {
+					printf("lastcode: %d\n", lastcode);
+				}
+				lastcode = 0;
+			}
 		}
 		return 1;
 	}
